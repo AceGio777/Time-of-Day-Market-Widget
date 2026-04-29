@@ -1,0 +1,428 @@
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+#widget {
+  font-family: var(--font-sans,'Inter',sans-serif);
+  min-height: 400px;
+  border-radius: var(--border-radius-lg,12px);
+  border: 0.5px solid var(--color-border-tertiary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1.5rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: background 1.2s ease, border-color 0.8s ease;
+}
+
+.theme-dawn      { background:#1a1025; border-color:#4a2f6a; }
+.theme-morning   { background:#0d1f3c; border-color:#1e4080; }
+.theme-midday    { background:#0a1628; border-color:#1a3a6e; }
+.theme-afternoon { background:#0f1a2e; border-color:#2a3a5e; }
+.theme-dusk      { background:#1c1018; border-color:#5c2a1a; }
+.theme-night     { background:#080c14; border-color:#1a2030; }
+
+.accent-dawn      { color:#c97dff; }
+.accent-morning   { color:#4dbdff; }
+.accent-midday    { color:#5fd3a0; }
+.accent-afternoon { color:#f7c948; }
+.accent-dusk      { color:#ff8c50; }
+.accent-night     { color:#7090c8; }
+
+.pill-dawn      { background:rgba(201,125,255,.15); border:0.5px solid rgba(201,125,255,.35); color:#c97dff; }
+.pill-morning   { background:rgba(77,189,255,.15);  border:0.5px solid rgba(77,189,255,.35);  color:#4dbdff; }
+.pill-midday    { background:rgba(95,211,160,.15);  border:0.5px solid rgba(95,211,160,.35);  color:#5fd3a0; }
+.pill-afternoon { background:rgba(247,201,72,.15);  border:0.5px solid rgba(247,201,72,.35);  color:#f7c948; }
+.pill-dusk      { background:rgba(255,140,80,.15);  border:0.5px solid rgba(255,140,80,.35);  color:#ff8c50; }
+.pill-night     { background:rgba(112,144,200,.15); border:0.5px solid rgba(112,144,200,.35); color:#7090c8; }
+
+#day-banner {
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.28);
+  margin-bottom:6px;
+}
+
+#sessions-row {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin-bottom:8px;
+  min-height:28px;
+}
+
+.session-pill {
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  padding:4px 13px;
+  border-radius:100px;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  transition:all .6s ease;
+}
+
+.session-label {
+  font-size:12px;
+  opacity:.65;
+  color:rgba(255,255,255,.55);
+  margin-bottom:4px;
+  letter-spacing:.03em;
+}
+
+#clock {
+  font-size:72px;
+  font-weight:400;
+  letter-spacing:-.02em;
+  line-height:1;
+  color:#fff;
+  font-variant-numeric:tabular-nums;
+  margin:2px 0 5px;
+  position:relative;
+}
+
+#date-line {
+  font-size:12px;
+  color:rgba(255,255,255,.3);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  margin-bottom:18px;
+}
+
+.divider { width:100%; height:.5px; background:rgba(255,255,255,.07); margin:0 0 14px; }
+
+#session-info {
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+
+.info-block { flex:1; text-align:center; }
+.info-label { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.25); margin-bottom:4px; font-weight:500; }
+.info-value { font-size:14px; font-weight:500; color:rgba(255,255,255,.85); font-variant-numeric:tabular-nums; }
+.info-sub   { font-size:10px; color:rgba(255,255,255,.28); margin-top:2px; }
+.sep-line   { width:.5px; height:40px; background:rgba(255,255,255,.07); flex-shrink:0; }
+
+.dot { display:inline-block; width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.dot-live   { background:#4ade80; animation:blink 2s infinite; }
+.dot-closed { background:rgba(255,255,255,.2); }
+.dot-warn   { background:#ff4444; animation:blink-red .7s infinite; }
+
+@keyframes blink     { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes blink-red { 0%,100%{opacity:1} 50%{opacity:.15} }
+
+/* last-hour ring around clock */
+#clock-wrap { position:relative; display:inline-flex; align-items:center; justify-content:center; }
+#warn-ring {
+  position:absolute;
+  inset:-10px;
+  border-radius:12px;
+  border:2px solid #ff4444;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .5s;
+}
+#warn-ring.active { animation:ring-pulse 1.2s ease-in-out infinite; }
+@keyframes ring-pulse {
+  0%,100% { opacity:0; box-shadow:0 0 0 0 rgba(255,68,68,0); }
+  50%      { opacity:1; box-shadow:0 0 18px 4px rgba(255,68,68,.25); }
+}
+
+.tz-badge   { position:absolute; top:13px; right:13px; font-size:10px; color:rgba(255,255,255,.2); letter-spacing:.06em; text-transform:uppercase; }
+.theme-icon { position:absolute; top:13px; left:13px; font-size:13px; opacity:.4; }
+
+/* money particles canvas */
+#money-canvas { position:absolute; inset:0; pointer-events:none; }
+</style>
+
+<canvas id="money-canvas"></canvas>
+
+<div id="widget" class="theme-night">
+  <div class="theme-icon" id="theme-icon">●</div>
+  <div class="tz-badge" id="tz-badge">UTC</div>
+
+  <div id="day-banner">Wednesday</div>
+  <div id="sessions-row"></div>
+  <div class="session-label" id="session-label">no active session</div>
+
+  <div id="clock-wrap">
+    <div id="warn-ring"></div>
+    <div id="clock">00:00:00 AM</div>
+  </div>
+  <div id="date-line">Loading...</div>
+
+  <div class="divider"></div>
+
+  <div id="session-info">
+    <div class="info-block">
+      <div class="info-label">Soonest close</div>
+      <div class="info-value" id="cur-close">—</div>
+      <div class="info-sub"  id="cur-close-sub">—</div>
+    </div>
+    <div class="sep-line"></div>
+    <div class="info-block">
+      <div class="info-label">Next opens</div>
+      <div class="info-value" id="next-open">—</div>
+      <div class="info-sub"  id="next-open-sub">—</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+/* ── sessions ── */
+const SESSIONS = [
+  { id:'sydney',   short:'Sydney',   label:'Asia-Pacific',  utcOpen:{h:21,m:0},  utcClose:{h:6,m:0},  crossDay:true  },
+  { id:'tokyo',    short:'Tokyo',    label:'Asian',         utcOpen:{h:0,m:0},   utcClose:{h:9,m:0},  crossDay:false },
+  { id:'london',   short:'London',   label:'European',      utcOpen:{h:8,m:0},   utcClose:{h:17,m:0}, crossDay:false },
+  { id:'new_york', short:'New York', label:'US',            utcOpen:{h:13,m:30}, utcClose:{h:20,m:0}, crossDay:false }
+];
+
+function toMins(h,m){ return h*60+m; }
+function fmtUTC(h,m){
+  const ap=h>=12?'PM':'AM'; const hh=((h%12)||12);
+  return hh+':'+String(m).padStart(2,'0')+' '+ap+' UTC';
+}
+function minsUntil(targetH,targetM,nowMins){
+  let d=toMins(targetH,targetM)-nowMins;
+  if(d<=0) d+=1440; return d;
+}
+function fmtCD(mins){
+  const h=Math.floor(mins/60), m=mins%60;
+  return h>0 ? h+'h '+String(m).padStart(2,'0')+'m' : m+'m';
+}
+
+function getActive(utcH,utcM){
+  const now=toMins(utcH,utcM);
+  return SESSIONS.filter(s=>{
+    const o=toMins(s.utcOpen.h,s.utcOpen.m), c=toMins(s.utcClose.h,s.utcClose.m);
+    return s.crossDay ? (now>=o||now<c) : (now>=o&&now<c);
+  });
+}
+
+function getNext(utcH,utcM,activeIds){
+  const now=toMins(utcH,utcM);
+  let best=null, bestD=Infinity;
+  for(const s of SESSIONS){
+    if(activeIds.includes(s.id)) continue;
+    let d=minsUntil(s.utcOpen.h,s.utcOpen.m,now);
+    if(d<bestD){ bestD=d; best=s; }
+  }
+  return best ? {session:best,minsUntil:bestD} : null;
+}
+
+/* ── theme ── */
+function getTheme(h){
+  if(h>=5&&h<7)  return 'dawn';
+  if(h>=7&&h<12) return 'morning';
+  if(h>=12&&h<15)return 'midday';
+  if(h>=15&&h<18)return 'afternoon';
+  if(h>=18&&h<21)return 'dusk';
+  return 'night';
+}
+const ICONS={dawn:'◑',morning:'○',midday:'◎',afternoon:'◐',dusk:'◕',night:'●'};
+const PILL_COLORS={
+  dawn:'rgba(201,125,255,',morning:'rgba(77,189,255,',midday:'rgba(95,211,160,',
+  afternoon:'rgba(247,201,72,',dusk:'rgba(255,140,80,',night:'rgba(112,144,200,'
+};
+
+/* ── money particles ── */
+const canvas=document.getElementById('money-canvas');
+const ctx=canvas.getContext('2d');
+let particles=[];
+let animFrame;
+
+function resizeCanvas(){
+  const w=document.getElementById('widget');
+  canvas.width=w.offsetWidth; canvas.height=w.offsetHeight;
+}
+
+const BILLS=['💵','💴','💶','💷','🪙'];
+function spawnMoney(){
+  resizeCanvas();
+  particles=[];
+  for(let i=0;i<28;i++){
+    particles.push({
+      x: canvas.width*0.15 + Math.random()*canvas.width*0.7,
+      y: canvas.height*0.7 + Math.random()*canvas.height*0.2,
+      vx: (Math.random()-0.5)*2.2,
+      vy: -(2.5+Math.random()*3.5),
+      rot: Math.random()*360,
+      rotV: (Math.random()-0.5)*6,
+      scale: 0.7+Math.random()*0.8,
+      alpha: 1,
+      bill: BILLS[Math.floor(Math.random()*BILLS.length)],
+      delay: i*120
+    });
+  }
+  const start=performance.now();
+  const dur=7000;
+  cancelAnimationFrame(animFrame);
+  function draw(ts){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let any=false;
+    for(const p of particles){
+      const elapsed=ts-start-p.delay;
+      if(elapsed<0){ any=true; continue; }
+      const t=Math.min(elapsed/dur,1);
+      if(t>=1) continue;
+      any=true;
+      p.x+=p.vx; p.y+=p.vy;
+      p.vy+=0.045;
+      p.rot+=p.rotV;
+      p.alpha=t<0.5?1:1-((t-0.5)/0.5);
+      ctx.save();
+      ctx.globalAlpha=p.alpha*0.92;
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.font=(22*p.scale)+'px serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(p.bill,0,0);
+      ctx.restore();
+    }
+    if(any) animFrame=requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  animFrame=requestAnimationFrame(draw);
+}
+
+/* ── session open tracking ── */
+let lastActiveIds=null;
+
+function checkNewOpens(activeIds){
+  if(lastActiveIds===null){ lastActiveIds=activeIds; return; }
+  const newOnes=activeIds.filter(id=>!lastActiveIds.includes(id));
+  if(newOnes.length>0) spawnMoney();
+  lastActiveIds=activeIds;
+}
+
+/* ── main update ── */
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let lastTheme='';
+
+function update(){
+  const now=new Date();
+  const lH=now.getHours(), lM=now.getMinutes(), lS=now.getSeconds();
+  const utcH=now.getUTCHours(), utcM=now.getUTCMinutes();
+  const theme=getTheme(lH);
+
+  /* clock */
+  const h12=((lH%12)||12), ap=lH>=12?'PM':'AM';
+  document.getElementById('clock').textContent=
+    h12+':'+String(lM).padStart(2,'0')+':'+String(lS).padStart(2,'0')+' '+ap;
+
+  /* date */
+  document.getElementById('date-line').textContent=
+    MONTHS[now.getMonth()]+' '+now.getDate()+', '+now.getFullYear();
+  document.getElementById('day-banner').textContent=DAYS[now.getDay()];
+
+  /* theme */
+  const widget=document.getElementById('widget');
+  if(theme!==lastTheme){ widget.className='theme-'+theme; lastTheme=theme; }
+  document.getElementById('theme-icon').textContent=ICONS[theme];
+
+  const tzName=(()=>{
+    try{ return Intl.DateTimeFormat().resolvedOptions().timeZone.split('/').pop().replace(/_/g,' '); }
+    catch(e){ return 'Local'; }
+  })();
+  document.getElementById('tz-badge').textContent=tzName;
+
+  /* sessions */
+  const active=getActive(utcH,utcM);
+  const activeIds=active.map(s=>s.id);
+  checkNewOpens(activeIds);
+
+  const nowMins=toMins(utcH,utcM);
+  const pillC=PILL_COLORS[theme];
+
+  const row=document.getElementById('sessions-row');
+  row.innerHTML='';
+
+  let anyWarn=false;
+
+  if(active.length===0){
+    const p=document.createElement('div');
+    p.className='session-pill pill-'+theme;
+    p.innerHTML='<span class="dot dot-closed"></span>No Active Session';
+    row.appendChild(p);
+    document.getElementById('session-label').textContent='markets quiet';
+  } else {
+    active.forEach(s=>{
+      const close=toMins(s.utcClose.h,s.utcClose.m);
+      let closeIn=close-nowMins; if(closeIn<0) closeIn+=1440;
+      const lastHour=closeIn<=60;
+      if(lastHour) anyWarn=true;
+
+      const p=document.createElement('div');
+      p.className='session-pill';
+      p.style.background=pillC+(lastHour?'.22)':'.13)');
+      p.style.border='0.5px solid '+pillC+(lastHour?'.6)':'.3)');
+      p.style.color=lastHour?'#ff7070':(pillC+'1)').replace('rgba','rgb').replace(',1)','').replace('rgba(','#');
+
+      const dotCls=lastHour?'dot-warn':'dot-live';
+      p.innerHTML='<span class="dot '+dotCls+'"></span>'+s.short+(lastHour?' · closing soon':'');
+
+      const accentColors={
+        dawn:'#c97dff',morning:'#4dbdff',midday:'#5fd3a0',
+        afternoon:'#f7c948',dusk:'#ff8c50',night:'#7090c8'
+      };
+      if(!lastHour) p.style.color=accentColors[theme];
+
+      row.appendChild(p);
+    });
+
+    const labels=active.map(s=>s.label+' session').join(' · ');
+    document.getElementById('session-label').textContent=labels;
+  }
+
+  /* warn ring */
+  const ring=document.getElementById('warn-ring');
+  if(anyWarn){ ring.classList.add('active'); }
+  else { ring.classList.remove('active'); }
+
+  /* bottom info */
+  if(active.length>0){
+    const soonest=active.reduce((best,s)=>{
+      const c=toMins(s.utcClose.h,s.utcClose.m);
+      let d=c-nowMins; if(d<0) d+=1440;
+      return d<best.d?{s,d}:{...best};
+    },{s:active[0],d:Infinity});
+    const sd=soonest.s, closeIn=soonest.d;
+    document.getElementById('cur-close').textContent=fmtCD(Math.round(closeIn));
+    document.getElementById('cur-close-sub').textContent=
+      sd.short+' closes '+fmtUTC(sd.utcClose.h,sd.utcClose.m);
+  } else {
+    document.getElementById('cur-close').textContent='—';
+    document.getElementById('cur-close-sub').textContent='no active session';
+  }
+
+  const next=getNext(utcH,utcM,activeIds);
+  if(next){
+    document.getElementById('next-open').textContent=fmtCD(Math.round(next.minsUntil));
+    document.getElementById('next-open-sub').textContent=
+      next.session.short+' opens '+fmtUTC(next.session.utcOpen.h,next.session.utcOpen.m);
+  } else {
+    document.getElementById('next-open').textContent='—';
+    document.getElementById('next-open-sub').textContent='—';
+  }
+}
+
+update();
+setInterval(update,1000);
+
+window.addEventListener('resize',resizeCanvas);
+
+})();
+</script>
