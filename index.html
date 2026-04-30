@@ -18,38 +18,46 @@
   }
   body { background: var(--bg); color: var(--text); font-family: var(--mono); padding: 20px; transition: background 0.3s; overflow: hidden; }
 
-  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
   .location { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
 
-  /* Clock Display */
-  .clock-container { text-align: center; margin: 20px 0; }
-  .day-text { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px; }
-  .time-text { font-family: var(--syne); font-size: 48px; font-weight: 700; line-height: 1; margin-bottom: 5px; }
-  .date-text { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+  /* Bold Clock Display */
+  .clock-container { text-align: center; margin: 15px 0; }
+  .day-text { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 4px; margin-bottom: 2px; }
+  .time-text { 
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; 
+    font-size: 64px; 
+    text-transform: uppercase;
+    line-height: 0.9; 
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+  .date-text { font-size: 12px; color: var(--muted); margin-bottom: 15px; letter-spacing: 1px; }
 
   /* Session Badges */
-  .sessions { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
+  .sessions { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
   .session-badge {
-    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    padding: 6px 14px; border-radius: 4px; border: 1px solid var(--border);
     font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted);
     display: flex; align-items: center; gap: 6px; transition: 0.3s;
   }
-  .session-badge.active { border-color: var(--accent); color: var(--text); box-shadow: 0 0 10px rgba(34, 211, 238, 0.15); }
+  .session-badge.active { border-color: var(--accent); color: var(--text); background: rgba(34, 211, 238, 0.05); }
   .dot { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; }
   .active .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 
   /* Market Timers */
   .market-footer {
     display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border);
-    padding-top: 15px; text-align: center;
+    padding-top: 15px; text-align: center; gap: 10px;
   }
   .timer-box:first-child { border-right: 1px solid var(--border); }
-  .timer-label { font-size: 9px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-  .timer-val { font-size: 13px; font-weight: 500; }
+  .timer-label { font-size: 9px; color: var(--muted); text-transform: uppercase; margin-bottom: 2px; letter-spacing: 1px; }
+  .timer-sublabel { font-size: 8px; color: var(--accent); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; opacity: 0.8; }
+  .timer-val { font-size: 14px; font-weight: 500; font-family: var(--mono); }
 
   .theme-toggle {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
-    padding: 8px; border-radius: 50%; cursor: pointer; width: 34px; height: 34px;
+    padding: 8px; border-radius: 4px; cursor: pointer; width: 34px; height: 34px;
     display: flex; align-items: center; justify-content: center;
   }
 </style>
@@ -57,7 +65,7 @@
 <body data-theme="dark">
 
   <div class="header">
-    <span class="location" id="tz-label">New York</span>
+    <span class="location">Global Terminal</span>
     <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
   </div>
 
@@ -78,12 +86,14 @@
 
   <div class="market-footer">
     <div class="timer-box">
-      <div class="timer-label">Next Open</div>
-      <div class="timer-val" id="next-open">--:--</div>
+      <div class="timer-label">Soonest Close</div>
+      <div id="close-name" class="timer-sublabel">London Market</div>
+      <div class="timer-val" id="next-close">--:--:--</div>
     </div>
     <div class="timer-box">
-      <div class="timer-label">Next Close</div>
-      <div class="timer-val" id="next-close">--:--</div>
+      <div class="timer-label">Next Opens</div>
+      <div id="open-name" class="timer-sublabel">Sydney Market</div>
+      <div class="timer-val" id="next-open">--:--:--</div>
     </div>
   </div>
 
@@ -96,38 +106,71 @@
   function updateClock() {
     const now = new Date();
     
-    // Format Time
-    const timeStr = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    document.getElementById('main-clock').textContent = timeStr;
+    // Main Clock
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('main-clock').textContent = `${h}:${m}:${s}`;
 
-    // Format Date
+    // Date
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     document.getElementById('day-name').textContent = days[now.getDay()];
-    
     const dateOptions = { month: 'short', day: '2-digit', year: 'numeric' };
     document.getElementById('full-date').textContent = now.toLocaleDateString('en-US', dateOptions).toUpperCase();
 
-    // Session Logic (UTC Based)
     const utcHour = now.getUTCHours();
-    
-    // London: 08:00 - 16:00 UTC
-    const londonActive = utcHour >= 8 && utcHour < 16;
-    document.getElementById('session-london').classList.toggle('active', londonActive);
+    const utcMin = now.getUTCMinutes();
+    const utcSec = now.getUTCSeconds();
+    const totalUtcSeconds = (utcHour * 3600) + (utcMin * 60) + utcSec;
 
-    // NY: 13:00 - 21:00 UTC
+    // Active Status
+    const londonActive = utcHour >= 8 && utcHour < 16;
     const nyActive = utcHour >= 13 && utcHour < 21;
+    document.getElementById('session-london').classList.toggle('active', londonActive);
     document.getElementById('session-ny').classList.toggle('active', nyActive);
 
-    // Simple Countdown Logic
-    // NY Close is 21:00 UTC
-    let closeRemaining = (21 - utcHour);
-    if (closeRemaining < 0) closeRemaining += 24;
-    document.getElementById('next-close').textContent = closeRemaining + "h remaining";
+    // Logic for "Soonest Close"
+    // London closes 16:00 UTC, NY closes 21:00 UTC
+    let closeTarget, closeName;
+    if (utcHour < 16) {
+      closeTarget = 16 * 3600;
+      closeName = "London Session";
+    } else if (utcHour < 21) {
+      closeTarget = 21 * 3600;
+      closeName = "New York Session";
+    } else {
+      closeTarget = (16 + 24) * 3600; // London tomorrow
+      closeName = "London Session";
+    }
+    document.getElementById('close-name').textContent = closeName;
+    document.getElementById('next-close').textContent = formatCountdown(closeTarget - totalUtcSeconds);
 
-    // Sydney Open is 22:00 UTC
-    let openRemaining = (22 - utcHour);
-    if (openRemaining < 0) openRemaining += 24;
-    document.getElementById('next-open').textContent = openRemaining + "h remaining";
+    // Logic for "Next Open"
+    // Sydney 22:00 UTC, Tokyo 00:00 UTC, London 08:00 UTC, NY 13:00 UTC
+    let openTarget, openName;
+    if (totalUtcSeconds < 8 * 3600) {
+      openTarget = 8 * 3600;
+      openName = "London Session";
+    } else if (totalUtcSeconds < 13 * 3600) {
+      openTarget = 13 * 3600;
+      openName = "New York Session";
+    } else if (totalUtcSeconds < 22 * 3600) {
+      openTarget = 22 * 3600;
+      openName = "Sydney Session";
+    } else {
+      openTarget = (8 + 24) * 3600;
+      openName = "London Session";
+    }
+    document.getElementById('open-name').textContent = openName;
+    document.getElementById('next-open').textContent = formatCountdown(openTarget - totalUtcSeconds);
+  }
+
+  function formatCountdown(sec) {
+    if (sec < 0) sec += 86400;
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
   }
 
   setInterval(updateClock, 1000);
