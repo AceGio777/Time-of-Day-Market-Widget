@@ -18,51 +18,40 @@
   }
   body { background: var(--bg); color: var(--text); font-family: var(--mono); transition: 0.3s; overflow: hidden; position: relative; min-height: 100vh; }
 
-  /* Background Chart */
   #chart-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.2; pointer-events: none; }
 
-  /* 1. TICKER TAPE */
-  .ticker-wrap {
-    width: 100%; overflow: hidden; background: rgba(0,0,0,0.5);
-    border-bottom: 1px solid var(--border); white-space: nowrap; padding: 5px 0;
-  }
+  .ticker-wrap { width: 100%; overflow: hidden; background: rgba(0,0,0,0.5); border-bottom: 1px solid var(--border); white-space: nowrap; padding: 5px 0; }
   .ticker-move { display: inline-block; animation: ticker 20s linear infinite; }
   @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
   .ticker-item { display: inline-block; padding: 0 30px; font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
 
-  /* MAIN LAYOUT GRID */
   .terminal-main { display: grid; grid-template-columns: 180px 1fr 180px; align-items: center; padding: 20px; height: calc(100vh - 30px); }
 
-  /* 2. TODAY'S P&L BOX */
+  /* 2. TODAY'S P&L BOX WITH ARROW LAYER */
   .pnl-box { 
     background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; 
     text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 100px;
+    position: relative; overflow: hidden;
   }
-  .pnl-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-  .pnl-val { font-family: Impact; font-size: 32px; color: var(--text); }
+  .pnl-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; position: relative; z-index: 2; }
+  .pnl-val { font-family: Impact; font-size: 32px; color: var(--text); position: relative; z-index: 2; }
   .pnl-locked { font-size: 8px; color: var(--muted); text-transform: uppercase; line-height: 1.4; }
 
-  /* 3. CLOCK SPREAD */
+  /* ARROW ANIMATIONS */
+  .pnl-arrow { position: absolute; font-size: 12px; opacity: 0; pointer-events: none; z-index: 1; }
+  @keyframes floatUpFade { 0% { transform: translateY(20px); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(-20px); opacity: 0; } }
+  @keyframes floatDownFade { 0% { transform: translateY(-20px); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(20px); opacity: 0; } }
+  .up-arr { animation: floatUpFade 3s infinite linear; }
+  .down-arr { animation: floatDownFade 3s infinite linear; }
+
   .clock-container { text-align: center; }
   .day-text { font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 10px; margin-bottom: 10px; }
-  .time-text { 
-    font-family: Impact, sans-serif; 
-    font-size: 130px; 
-    line-height: 0.8; 
-    letter-spacing: 12px; /* Spread out lettering */
-    color: var(--text);
-    filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.1));
-  }
+  .time-text { font-family: Impact, sans-serif; font-size: 130px; line-height: 0.8; letter-spacing: 12px; color: var(--text); filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.1)); }
   .ampm { font-size: 30px; vertical-align: middle; margin-left: -10px; opacity: 0.5; }
   .date-text { font-size: 12px; color: var(--muted); margin-top: 15px; letter-spacing: 4px; }
 
-  /* SESSION BADGES */
   .sessions-footer { position: absolute; bottom: 30px; left: 0; width: 100%; display: flex; justify-content: center; gap: 15px; }
-  .session-badge {
-    padding: 6px 14px; border-radius: 4px; border: 1px solid var(--border);
-    font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted);
-    display: flex; align-items: center; gap: 6px; background: var(--bg);
-  }
+  .session-badge { padding: 6px 14px; border-radius: 4px; border: 1px solid var(--border); font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; background: var(--bg); }
   .session-badge.active { border-color: var(--accent); color: var(--text); }
   .dot { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; }
   .active .dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
@@ -106,7 +95,6 @@
   </div>
 
 <script>
-  // --- CONFIG (USE SAME AS JOURNAL) ---
   const firebaseConfig = {
     apiKey: "AIzaSyBaUuA3BTSTZG5jV4GzIEb0WaVXflbLprw",
     authDomain: "ace-gio-s-day-trading-notion.firebaseapp.com",
@@ -132,38 +120,45 @@
   function updateTickerAndPnl(history) {
     if (history.length === 0) return;
 
-    // 1. Update Ticker Tape
     const lastTrade = history[0];
     const wins = history.filter(t => t.pnl > 0).length;
     const wr = Math.round((wins / history.length) * 100);
     const tickerStr = `LAST TRADE: ${lastTrade.ticker} ${lastTrade.pnl >= 0 ? '+' : ''}$${lastTrade.pnl} • OVERALL WIN RATE: ${wr}% • TOTAL TRADES: ${history.length} • TERMINAL ACTIVE •`;
     document.getElementById('ticker-content').innerHTML = `<span class="ticker-item">${tickerStr}</span><span class="ticker-item">${tickerStr}</span>`;
 
-    // 2. Update Today's P&L
     const todayStr = new Date().toLocaleDateString();
     const todayPnl = history
         .filter(t => t.date === todayStr && (t.type || 'live') === 'live')
         .reduce((sum, t) => sum + t.pnl, 0);
 
     const pnlBox = document.getElementById('daily-pnl-box');
+    const isUp = todayPnl >= 0;
+    
+    // Generate Arrows HTML
+    let arrowHtml = '';
+    for(let i=0; i<4; i++) {
+        const side = i % 2 === 0 ? 'left' : 'right';
+        const pos = i < 2 ? '10%' : '75%';
+        const delay = (i * 0.7) + 's';
+        arrowHtml += `<span class="pnl-arrow ${isUp ? 'up-arr' : 'down-arr'}" style="${side}:${pos}; color:${isUp ? 'var(--green)' : 'var(--red)'}; animation-delay:${delay}">${isUp ? '▲' : '▼'}</span>`;
+    }
+
     pnlBox.innerHTML = `
+        ${arrowHtml}
         <div class="pnl-label">Today's P&L</div>
-        <div class="pnl-val" style="color:${todayPnl >= 0 ? 'var(--green)' : 'var(--red)'}">
-            ${todayPnl >= 0 ? '$' : '-$'}${Math.abs(todayPnl).toLocaleString()}
+        <div class="pnl-val" style="color:${isUp ? 'var(--green)' : 'var(--red)'}">
+            ${isUp ? '$' : '-$'}${Math.abs(todayPnl).toLocaleString()}
         </div>
     `;
   }
 
   function updateClock() {
     const now = new Date();
-    
-    // 12-Hour Clock
     let h = now.getHours();
     const m = String(now.getMinutes()).padStart(2, '0');
     const s = String(now.getSeconds()).padStart(2, '0');
     const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12; // convert 0 to 12
+    h = h % 12 || 12;
     
     document.getElementById('main-clock').textContent = `${String(h).padStart(2, '0')}:${m}:${s}`;
     document.getElementById('ampm').textContent = ampm;
@@ -172,7 +167,6 @@
     document.getElementById('day-name').textContent = days[now.getDay()];
     document.getElementById('full-date').textContent = now.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase();
 
-    // Market Session Logic (UTC)
     const utcHour = now.getUTCHours();
     document.getElementById('s-sydney').classList.toggle('active', utcHour >= 22 || utcHour < 6);
     document.getElementById('s-tokyo').classList.toggle('active', utcHour >= 0 && utcHour < 9);
@@ -180,7 +174,6 @@
     document.getElementById('s-ny').classList.toggle('active', utcHour >= 13 && utcHour < 21);
   }
 
-  // --- CHART ANIMATION ---
   const canvas = document.getElementById('chart-canvas');
   const ctx = canvas.getContext('2d');
   let candles = [];
@@ -203,7 +196,7 @@
   function animateChart() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     candles.forEach((c, i) => {
-      c.x -= 0.4; // Very slow crawl
+      c.x -= 0.4;
       ctx.strokeStyle = c.color; ctx.fillStyle = c.color; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(c.x + 6, c.high); ctx.lineTo(c.x + 6, c.low); ctx.stroke();
       ctx.fillRect(c.x, Math.min(c.open, c.close), 12, Math.max(Math.abs(c.close-c.open), 2));
