@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Elite Clock | Market Sessions</title>
+<title>Elite Terminal | Flashy Edition</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700&display=swap" rel="stylesheet" />
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,56 +16,73 @@
     --bg: #f4f4f5; --surface: #ffffff; --border: #e4e4e7;
     --text: #09090b; --muted: #71717a; --accent: #0891b2;
   }
-  body { background: var(--bg); color: var(--text); font-family: var(--mono); padding: 20px; transition: background 0.3s; overflow: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: var(--mono); padding: 20px; transition: background 0.3s; overflow: hidden; position: relative; }
 
-  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  /* Background Chart Animation */
+  #chart-canvas {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1; opacity: 0.15; pointer-events: none;
+  }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; position: relative; z-index: 10; }
   .location { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
 
-  /* Bold Clock Display */
-  .clock-container { text-align: center; margin: 15px 0; }
-  .day-text { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 4px; margin-bottom: 2px; }
+  /* Massive Clock Display */
+  .clock-container { text-align: center; margin: 25px 0; position: relative; z-index: 10; }
+  .day-text { font-size: 14px; color: var(--accent); text-transform: uppercase; letter-spacing: 6px; margin-bottom: 5px; font-weight: 700; }
   .time-text { 
     font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; 
-    font-size: 64px; 
+    font-size: 110px; 
     text-transform: uppercase;
-    line-height: 0.9; 
-    letter-spacing: -1px;
-    margin-bottom: 8px;
+    line-height: 0.8; 
+    letter-spacing: -2px;
+    margin-bottom: 10px;
+    color: var(--text);
+    text-shadow: 0 0 30px rgba(34, 211, 238, 0.2);
   }
-  .date-text { font-size: 12px; color: var(--muted); margin-bottom: 15px; letter-spacing: 1px; }
+  .date-text { font-size: 12px; color: var(--muted); margin-bottom: 20px; letter-spacing: 2px; }
+
+  /* Progress Bar for Active Session */
+  .session-timeline { width: 100%; max-width: 400px; height: 4px; background: var(--border); margin: 0 auto 20px; border-radius: 10px; overflow: hidden; }
+  #timeline-fill { width: 0%; height: 100%; background: var(--accent); box-shadow: 0 0 10px var(--accent); transition: 1s; }
 
   /* Session Badges */
-  .sessions { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+  .sessions { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; position: relative; z-index: 10; }
   .session-badge {
-    padding: 6px 14px; border-radius: 4px; border: 1px solid var(--border);
+    padding: 8px 18px; border-radius: 6px; border: 1px solid var(--border);
     font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted);
-    display: flex; align-items: center; gap: 6px; transition: 0.3s;
+    display: flex; align-items: center; gap: 8px; transition: 0.4s;
+    background: var(--surface);
   }
-  .session-badge.active { border-color: var(--accent); color: var(--text); background: rgba(34, 211, 238, 0.05); }
-  .dot { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; }
-  .active .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .session-badge.active { border-color: var(--accent); color: var(--text); box-shadow: 0 0 15px rgba(34, 211, 238, 0.15); transform: scale(1.05); }
+  .dot { width: 8px; height: 8px; background: var(--muted); border-radius: 50%; }
+  .active .dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: blink 2s infinite; }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
   /* Market Timers */
   .market-footer {
     display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border);
-    padding-top: 15px; text-align: center; gap: 10px;
+    padding-top: 20px; text-align: center; gap: 15px; position: relative; z-index: 10;
   }
   .timer-box:first-child { border-right: 1px solid var(--border); }
-  .timer-label { font-size: 9px; color: var(--muted); text-transform: uppercase; margin-bottom: 2px; letter-spacing: 1px; }
-  .timer-sublabel { font-size: 8px; color: var(--accent); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; opacity: 0.8; }
-  .timer-val { font-size: 14px; font-weight: 500; font-family: var(--mono); }
+  .timer-label { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px; }
+  .timer-sublabel { font-size: 9px; color: var(--accent); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
+  .timer-val { font-size: 18px; font-weight: 700; font-family: var(--mono); color: var(--text); }
 
   .theme-toggle {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
-    padding: 8px; border-radius: 4px; cursor: pointer; width: 34px; height: 34px;
+    padding: 8px; border-radius: 50%; cursor: pointer; width: 34px; height: 34px;
     display: flex; align-items: center; justify-content: center;
   }
 </style>
 </head>
 <body data-theme="dark">
 
+  <canvas id="chart-canvas"></canvas>
+
   <div class="header">
-    <span class="location">Global Terminal</span>
+    <span class="location">Global Terminal Hub</span>
     <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
   </div>
 
@@ -73,6 +90,7 @@
     <div class="day-text" id="day-name">Thursday</div>
     <div class="time-text" id="main-clock">00:00:00</div>
     <div class="date-text" id="full-date">APR 30, 2026</div>
+    <div class="session-timeline"><div id="timeline-fill"></div></div>
   </div>
 
   <div class="sessions">
@@ -86,12 +104,12 @@
 
   <div class="market-footer">
     <div class="timer-box">
-      <div class="timer-label">Soonest Close</div>
+      <div class="timer-label">Session End In</div>
       <div id="close-name" class="timer-sublabel">London Market</div>
       <div class="timer-val" id="next-close">--:--:--</div>
     </div>
     <div class="timer-box">
-      <div class="timer-label">Next Opens</div>
+      <div class="timer-label">Next Entry Open</div>
       <div id="open-name" class="timer-sublabel">Sydney Market</div>
       <div class="timer-val" id="next-open">--:--:--</div>
     </div>
@@ -103,16 +121,62 @@
     body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
   }
 
+  // Candlestick Animation Logic
+  const canvas = document.getElementById('chart-canvas');
+  const ctx = canvas.getContext('2d');
+  let candles = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.onresize = resize;
+  resize();
+
+  function createCandle() {
+    return {
+      x: canvas.width,
+      y: Math.random() * (canvas.height * 0.6) + (canvas.height * 0.2),
+      w: 8,
+      h: Math.random() * 60 - 30,
+      wick: Math.random() * 80 - 40,
+      color: Math.random() > 0.5 ? '#4ade80' : '#f87171'
+    };
+  }
+
+  function animateChart() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (Math.random() > 0.9) candles.push(createCandle());
+    
+    candles.forEach((c, i) => {
+      c.x -= 2;
+      ctx.strokeStyle = c.color;
+      ctx.fillStyle = c.color;
+      ctx.lineWidth = 1;
+      
+      // Wick
+      ctx.beginPath();
+      ctx.moveTo(c.x + c.w/2, c.y - c.wick);
+      ctx.lineTo(c.x + c.w/2, c.y + c.wick);
+      ctx.stroke();
+      
+      // Body
+      ctx.fillRect(c.x, c.y, c.w, c.h);
+      
+      if (c.x < -20) candles.splice(i, 1);
+    });
+    requestAnimationFrame(animateChart);
+  }
+  animateChart();
+
   function updateClock() {
     const now = new Date();
     
-    // Main Clock
     const h = String(now.getHours()).padStart(2, '0');
     const m = String(now.getMinutes()).padStart(2, '0');
     const s = String(now.getSeconds()).padStart(2, '0');
     document.getElementById('main-clock').textContent = `${h}:${m}:${s}`;
 
-    // Date
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     document.getElementById('day-name').textContent = days[now.getDay()];
     const dateOptions = { month: 'short', day: '2-digit', year: 'numeric' };
@@ -123,14 +187,23 @@
     const utcSec = now.getUTCSeconds();
     const totalUtcSeconds = (utcHour * 3600) + (utcMin * 60) + utcSec;
 
-    // Active Status
+    // London Session (08:00 - 16:00 UTC)
+    // NY Session (13:00 - 21:00 UTC)
     const londonActive = utcHour >= 8 && utcHour < 16;
     const nyActive = utcHour >= 13 && utcHour < 21;
     document.getElementById('session-london').classList.toggle('active', londonActive);
     document.getElementById('session-ny').classList.toggle('active', nyActive);
 
-    // Logic for "Soonest Close"
-    // London closes 16:00 UTC, NY closes 21:00 UTC
+    // Progress Bar Logic (Based on the active session's progress)
+    let progress = 0;
+    if (nyActive) {
+        progress = ((totalUtcSeconds - (13 * 3600)) / (8 * 3600)) * 100;
+    } else if (londonActive) {
+        progress = ((totalUtcSeconds - (8 * 3600)) / (8 * 3600)) * 100;
+    }
+    document.getElementById('timeline-fill').style.width = progress + '%';
+
+    // Countdown Logic
     let closeTarget, closeName;
     if (utcHour < 16) {
       closeTarget = 16 * 3600;
@@ -139,27 +212,21 @@
       closeTarget = 21 * 3600;
       closeName = "New York Session";
     } else {
-      closeTarget = (16 + 24) * 3600; // London tomorrow
+      closeTarget = (16 + 24) * 3600;
       closeName = "London Session";
     }
     document.getElementById('close-name').textContent = closeName;
     document.getElementById('next-close').textContent = formatCountdown(closeTarget - totalUtcSeconds);
 
-    // Logic for "Next Open"
-    // Sydney 22:00 UTC, Tokyo 00:00 UTC, London 08:00 UTC, NY 13:00 UTC
     let openTarget, openName;
     if (totalUtcSeconds < 8 * 3600) {
-      openTarget = 8 * 3600;
-      openName = "London Session";
+      openTarget = 8 * 3600; openName = "London Session";
     } else if (totalUtcSeconds < 13 * 3600) {
-      openTarget = 13 * 3600;
-      openName = "New York Session";
+      openTarget = 13 * 3600; openName = "New York Session";
     } else if (totalUtcSeconds < 22 * 3600) {
-      openTarget = 22 * 3600;
-      openName = "Sydney Session";
+      openTarget = 22 * 3600; openName = "Sydney Session";
     } else {
-      openTarget = (8 + 24) * 3600;
-      openName = "London Session";
+      openTarget = (8 + 24) * 3600; openName = "London Session";
     }
     document.getElementById('open-name').textContent = openName;
     document.getElementById('next-open').textContent = formatCountdown(openTarget - totalUtcSeconds);
