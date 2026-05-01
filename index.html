@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Elite Terminal | Flashy Edition</title>
+<title>Elite Terminal | Ultra Clock</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700&display=swap" rel="stylesheet" />
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,65 +16,60 @@
     --bg: #f4f4f5; --surface: #ffffff; --border: #e4e4e7;
     --text: #09090b; --muted: #71717a; --accent: #0891b2;
   }
-  body { background: var(--bg); color: var(--text); font-family: var(--mono); padding: 20px; transition: background 0.3s; overflow: hidden; position: relative; }
+  body { background: var(--bg); color: var(--text); font-family: var(--mono); padding: 20px; transition: 0.3s; overflow: hidden; position: relative; min-height: 100vh; }
 
-  /* Background Chart Animation */
+  /* Background Chart */
   #chart-canvas {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    z-index: -1; opacity: 0.15; pointer-events: none;
+    z-index: -1; opacity: 0.2; pointer-events: none;
   }
 
-  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; position: relative; z-index: 10; }
-  .location { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 10; }
+  .location { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 3px; font-weight: 700; }
 
-  /* Massive Clock Display */
-  .clock-container { text-align: center; margin: 25px 0; position: relative; z-index: 10; }
-  .day-text { font-size: 14px; color: var(--accent); text-transform: uppercase; letter-spacing: 6px; margin-bottom: 5px; font-weight: 700; }
+  /* ULTRA CLOCK DISPLAY */
+  .clock-container { text-align: center; margin-top: 10px; position: relative; z-index: 10; }
+  .day-text { font-size: 18px; color: var(--accent); text-transform: uppercase; letter-spacing: 10px; margin-bottom: 5px; font-weight: 700; opacity: 0.8; }
+  
   .time-text { 
     font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; 
-    font-size: 110px; 
+    font-size: 160px; /* MEGA SIZE */
     text-transform: uppercase;
-    line-height: 0.8; 
-    letter-spacing: -2px;
-    margin-bottom: 10px;
+    line-height: 0.75; 
+    letter-spacing: -5px; /* Tighter Impact look */
+    margin-bottom: 15px;
     color: var(--text);
-    text-shadow: 0 0 30px rgba(34, 211, 238, 0.2);
+    filter: drop-shadow(0 0 40px rgba(34, 211, 238, 0.15));
   }
-  .date-text { font-size: 12px; color: var(--muted); margin-bottom: 20px; letter-spacing: 2px; }
+  
+  .date-text { font-size: 14px; color: var(--muted); margin-bottom: 30px; letter-spacing: 4px; font-weight: 500; }
 
-  /* Progress Bar for Active Session */
-  .session-timeline { width: 100%; max-width: 400px; height: 4px; background: var(--border); margin: 0 auto 20px; border-radius: 10px; overflow: hidden; }
-  #timeline-fill { width: 0%; height: 100%; background: var(--accent); box-shadow: 0 0 10px var(--accent); transition: 1s; }
+  .session-timeline { width: 80%; max-width: 600px; height: 3px; background: var(--border); margin: 0 auto 30px; border-radius: 10px; overflow: hidden; }
+  #timeline-fill { width: 0%; height: 100%; background: var(--accent); box-shadow: 0 0 15px var(--accent); transition: 1s; }
 
-  /* Session Badges */
-  .sessions { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; position: relative; z-index: 10; }
+  .sessions { display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; position: relative; z-index: 10; }
   .session-badge {
-    padding: 8px 18px; border-radius: 6px; border: 1px solid var(--border);
-    font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted);
-    display: flex; align-items: center; gap: 8px; transition: 0.4s;
+    padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border);
+    font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted);
+    display: flex; align-items: center; gap: 10px; transition: 0.4s;
     background: var(--surface);
   }
-  .session-badge.active { border-color: var(--accent); color: var(--text); box-shadow: 0 0 15px rgba(34, 211, 238, 0.15); transform: scale(1.05); }
+  .session-badge.active { border-color: var(--accent); color: var(--text); background: rgba(34, 211, 238, 0.05); transform: scale(1.1); }
   .dot { width: 8px; height: 8px; background: var(--muted); border-radius: 50%; }
-  .active .dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: blink 2s infinite; }
+  .active .dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: pulse 2s infinite; }
 
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
 
-  /* Market Timers */
   .market-footer {
     display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border);
-    padding-top: 20px; text-align: center; gap: 15px; position: relative; z-index: 10;
+    padding-top: 25px; text-align: center; gap: 20px; position: relative; z-index: 10;
   }
   .timer-box:first-child { border-right: 1px solid var(--border); }
-  .timer-label { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px; }
-  .timer-sublabel { font-size: 9px; color: var(--accent); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
-  .timer-val { font-size: 18px; font-weight: 700; font-family: var(--mono); color: var(--text); }
+  .timer-label { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; letter-spacing: 2px; }
+  .timer-sublabel { font-size: 10px; color: var(--accent); text-transform: uppercase; font-weight: 700; margin-bottom: 10px; }
+  .timer-val { font-size: 22px; font-weight: 700; font-family: var(--mono); color: var(--text); letter-spacing: -1px; }
 
-  .theme-toggle {
-    background: var(--surface); border: 1px solid var(--border); color: var(--text);
-    padding: 8px; border-radius: 50%; cursor: pointer; width: 34px; height: 34px;
-    display: flex; align-items: center; justify-content: center;
-  }
+  .theme-toggle { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 50%; cursor: pointer; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; }
 </style>
 </head>
 <body data-theme="dark">
@@ -82,7 +77,7 @@
   <canvas id="chart-canvas"></canvas>
 
   <div class="header">
-    <span class="location">Global Terminal Hub</span>
+    <span class="location">Elite Global Terminal</span>
     <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
   </div>
 
@@ -94,22 +89,18 @@
   </div>
 
   <div class="sessions">
-    <div class="session-badge" id="session-london">
-      <div class="dot"></div> London
-    </div>
-    <div class="session-badge" id="session-ny">
-      <div class="dot"></div> New York
-    </div>
+    <div class="session-badge" id="session-london"><div class="dot"></div> London</div>
+    <div class="session-badge" id="session-ny"><div class="dot"></div> New York</div>
   </div>
 
   <div class="market-footer">
     <div class="timer-box">
-      <div class="timer-label">Session End In</div>
+      <div class="timer-label">Session Remaining</div>
       <div id="close-name" class="timer-sublabel">London Market</div>
       <div class="timer-val" id="next-close">--:--:--</div>
     </div>
     <div class="timer-box">
-      <div class="timer-label">Next Entry Open</div>
+      <div class="timer-label">Next Opportunity</div>
       <div id="open-name" class="timer-sublabel">Sydney Market</div>
       <div class="timer-val" id="next-open">--:--:--</div>
     </div>
@@ -121,10 +112,13 @@
     body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
   }
 
-  // Candlestick Animation Logic
+  // --- REALISTIC TRENDING CHART LOGIC ---
   const canvas = document.getElementById('chart-canvas');
   const ctx = canvas.getContext('2d');
   let candles = [];
+  let lastClose = window.innerHeight / 2;
+  const candleWidth = 12;
+  const spacing = 4;
 
   function resize() {
     canvas.width = window.innerWidth;
@@ -133,45 +127,79 @@
   window.onresize = resize;
   resize();
 
-  function createCandle() {
+  function generateCandle() {
+    // Trend logic: current open = last close
+    let open = lastClose;
+    // Volatility: moves up or down by max 40px
+    let change = (Math.random() - 0.5) * 60; 
+    let close = open + change;
+    
+    // Constraints to keep chart on screen
+    if (close < 100) close += 50;
+    if (close > canvas.height - 100) close -= 50;
+
+    let high = Math.min(open, close) - Math.random() * 20;
+    let low = Math.max(open, close) + Math.random() * 20;
+
+    lastClose = close;
+
     return {
       x: canvas.width,
-      y: Math.random() * (canvas.height * 0.6) + (canvas.height * 0.2),
-      w: 8,
-      h: Math.random() * 60 - 30,
-      wick: Math.random() * 80 - 40,
-      color: Math.random() > 0.5 ? '#4ade80' : '#f87171'
+      open: open,
+      close: close,
+      high: high,
+      low: low,
+      color: close < open ? '#4ade80' : '#f87171' // Green for up, Red for down
     };
+  }
+
+  // Initialize with some candles
+  for(let i = 0; i < 50; i++) {
+    let c = generateCandle();
+    c.x = (canvas.width) - (i * (candleWidth + spacing));
+    candles.push(c);
   }
 
   function animateChart() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (Math.random() > 0.9) candles.push(createCandle());
     
+    // Slow crawl speed
+    const speed = 0.5;
+
     candles.forEach((c, i) => {
-      c.x -= 2;
+      c.x -= speed;
       ctx.strokeStyle = c.color;
       ctx.fillStyle = c.color;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.5;
       
       // Wick
       ctx.beginPath();
-      ctx.moveTo(c.x + c.w/2, c.y - c.wick);
-      ctx.lineTo(c.x + c.w/2, c.y + c.wick);
+      ctx.moveTo(c.x + candleWidth/2, c.high);
+      ctx.lineTo(c.x + candleWidth/2, c.low);
       ctx.stroke();
       
       // Body
-      ctx.fillRect(c.x, c.y, c.w, c.h);
-      
-      if (c.x < -20) candles.splice(i, 1);
+      let bodyHeight = Math.abs(c.close - c.open);
+      ctx.fillRect(c.x, Math.min(c.open, c.close), candleWidth, Math.max(bodyHeight, 2));
     });
+
+    // When the right-most candle has moved enough, add a new one
+    if (candles[0].x <= canvas.width - (candleWidth + spacing)) {
+        let newC = generateCandle();
+        candles.unshift(newC);
+    }
+
+    // Cleanup off-screen candles
+    if (candles[candles.length - 1].x < -50) {
+        candles.pop();
+    }
+
     requestAnimationFrame(animateChart);
   }
   animateChart();
 
   function updateClock() {
     const now = new Date();
-    
     const h = String(now.getHours()).padStart(2, '0');
     const m = String(now.getMinutes()).padStart(2, '0');
     const s = String(now.getSeconds()).padStart(2, '0');
@@ -183,51 +211,31 @@
     document.getElementById('full-date').textContent = now.toLocaleDateString('en-US', dateOptions).toUpperCase();
 
     const utcHour = now.getUTCHours();
-    const utcMin = now.getUTCMinutes();
-    const utcSec = now.getUTCSeconds();
-    const totalUtcSeconds = (utcHour * 3600) + (utcMin * 60) + utcSec;
+    const totalUtcSeconds = (utcHour * 3600) + (now.getUTCMinutes() * 60) + now.getUTCSeconds();
 
-    // London Session (08:00 - 16:00 UTC)
-    // NY Session (13:00 - 21:00 UTC)
     const londonActive = utcHour >= 8 && utcHour < 16;
     const nyActive = utcHour >= 13 && utcHour < 21;
     document.getElementById('session-london').classList.toggle('active', londonActive);
     document.getElementById('session-ny').classList.toggle('active', nyActive);
 
-    // Progress Bar Logic (Based on the active session's progress)
     let progress = 0;
-    if (nyActive) {
-        progress = ((totalUtcSeconds - (13 * 3600)) / (8 * 3600)) * 100;
-    } else if (londonActive) {
-        progress = ((totalUtcSeconds - (8 * 3600)) / (8 * 3600)) * 100;
-    }
+    if (nyActive) progress = ((totalUtcSeconds - (13 * 3600)) / (8 * 3600)) * 100;
+    else if (londonActive) progress = ((totalUtcSeconds - (8 * 3600)) / (8 * 3600)) * 100;
     document.getElementById('timeline-fill').style.width = progress + '%';
 
     // Countdown Logic
     let closeTarget, closeName;
-    if (utcHour < 16) {
-      closeTarget = 16 * 3600;
-      closeName = "London Session";
-    } else if (utcHour < 21) {
-      closeTarget = 21 * 3600;
-      closeName = "New York Session";
-    } else {
-      closeTarget = (16 + 24) * 3600;
-      closeName = "London Session";
-    }
+    if (utcHour < 16) { closeTarget = 16 * 3600; closeName = "London Session"; }
+    else if (utcHour < 21) { closeTarget = 21 * 3600; closeName = "New York Session"; }
+    else { closeTarget = (16 + 24) * 3600; closeName = "London Session"; }
     document.getElementById('close-name').textContent = closeName;
     document.getElementById('next-close').textContent = formatCountdown(closeTarget - totalUtcSeconds);
 
     let openTarget, openName;
-    if (totalUtcSeconds < 8 * 3600) {
-      openTarget = 8 * 3600; openName = "London Session";
-    } else if (totalUtcSeconds < 13 * 3600) {
-      openTarget = 13 * 3600; openName = "New York Session";
-    } else if (totalUtcSeconds < 22 * 3600) {
-      openTarget = 22 * 3600; openName = "Sydney Session";
-    } else {
-      openTarget = (8 + 24) * 3600; openName = "London Session";
-    }
+    if (totalUtcSeconds < 8 * 3600) { openTarget = 8 * 3600; openName = "London Session"; }
+    else if (totalUtcSeconds < 13 * 3600) { openTarget = 13 * 3600; openName = "New York Session"; }
+    else if (totalUtcSeconds < 22 * 3600) { openTarget = 22 * 3600; openName = "Sydney Session"; }
+    else { openTarget = (8 + 24) * 3600; openName = "London Session"; }
     document.getElementById('open-name').textContent = openName;
     document.getElementById('next-open').textContent = formatCountdown(openTarget - totalUtcSeconds);
   }
