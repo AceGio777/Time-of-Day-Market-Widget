@@ -3,155 +3,500 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Elite Terminal | Command Center</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700&display=swap" rel="stylesheet" />
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+<title>Elite Terminal | Forex Factory Feed</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Syne:wght@700&display=swap" rel="stylesheet" />
 
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #0e0e0f; --surface: #18181b; --border: #2a2a2e;
     --text: #f4f4f5; --muted: #71717a; --accent: #22d3ee;
-    --green: #4ade80; --red: #f87171; --mono: 'DM Mono', monospace; --syne: 'Syne', sans-serif;
+    --green: #4ade80; --red: #f87171; --orange: #fbbf24; --yellow: #fef08a;
+    --mono: 'DM Mono', monospace; --syne: 'Syne', sans-serif;
   }
-  body { background: var(--bg); color: var(--text); font-family: var(--mono); transition: 0.3s; overflow: hidden; position: relative; min-height: 100vh; }
+  
+  /* Light Theme Overrides */
+  [data-theme='light'] {
+    --bg: #f4f4f5; --surface: #ffffff; --border: #e4e4e7;
+    --text: #18181b; --muted: #a1a1aa; --accent: #0284c7;
+  }
 
-  #chart-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.2; pointer-events: none; }
+  body { 
+    background: var(--bg); 
+    color: var(--text); 
+    font-family: var(--mono); 
+    transition: background 0.3s, color 0.3s; 
+    overflow: hidden; 
+    position: relative; 
+    min-height: 100vh; 
+  }
 
-  .ticker-wrap { width: 100%; overflow: hidden; background: rgba(0,0,0,0.5); border-bottom: 1px solid var(--border); white-space: nowrap; padding: 5px 0; }
-  .ticker-move { display: inline-block; animation: ticker 20s linear infinite; }
+  #chart-canvas { 
+    position: absolute; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    z-index: -1; 
+    opacity: 0.15; 
+    pointer-events: none; 
+  }
+
+  /* Ticker */
+  .ticker-wrap { 
+    width: 100%; 
+    overflow: hidden; 
+    background: rgba(0,0,0,0.5); 
+    border-bottom: 1px solid var(--border); 
+    white-space: nowrap; 
+    padding: 6px 0; 
+  }
+  .ticker-move { 
+    display: inline-block; 
+    animation: ticker 30s linear infinite; 
+  }
   @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-  .ticker-item { display: inline-block; padding: 0 30px; font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
-
-  .terminal-main { display: grid; grid-template-columns: 180px 1fr 180px; align-items: center; padding: 20px; height: calc(100vh - 30px); }
-
-  /* 2. TODAY'S P&L BOX WITH ARROW LAYER */
-  .pnl-box { 
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px; 
-    text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 100px;
-    position: relative; overflow: hidden;
+  .ticker-item { 
+    display: inline-block; 
+    padding: 0 40px; 
+    font-size: 10px; 
+    font-weight: 700; 
+    color: var(--accent); 
+    text-transform: uppercase; 
+    letter-spacing: 2px; 
   }
-  .pnl-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; position: relative; z-index: 2; }
-  .pnl-val { font-family: Impact; font-size: 32px; color: var(--text); position: relative; z-index: 2; }
-  .pnl-locked { font-size: 8px; color: var(--muted); text-transform: uppercase; line-height: 1.4; }
 
-  /* ARROW ANIMATIONS */
-  .pnl-arrow { position: absolute; font-size: 12px; opacity: 0; pointer-events: none; z-index: 1; }
-  @keyframes floatUpFade { 0% { transform: translateY(20px); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(-20px); opacity: 0; } }
-  @keyframes floatDownFade { 0% { transform: translateY(-20px); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(20px); opacity: 0; } }
+  /* Layout */
+  .terminal-main { 
+    display: grid; 
+    grid-template-columns: 240px 1fr 240px; 
+    gap: 20px; 
+    padding: 20px; 
+    height: calc(100vh - 35px); 
+  }
+
+  .box { 
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: 12px; 
+    padding: 15px; 
+    position: relative; 
+    display: flex; 
+    flex-direction: column; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+  .box-title { 
+    font-size: 10px; 
+    color: var(--muted); 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    margin-bottom: 10px; 
+    z-index: 2;
+  }
+
+  /* Left Column: Clock & Sessions */
+  .clock-box { text-align: center; justify-content: center; align-items: center; padding: 25px 15px; }
+  .day-text { font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 4px; margin-bottom: 5px; }
+  .time-text { font-family: Impact, sans-serif; font-size: 46px; line-height: 1; letter-spacing: 4px; color: var(--text); filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1)); margin: 10px 0; }
+  .ampm { font-size: 14px; opacity: 0.5; margin-left: 5px; vertical-align: middle; }
+  .date-text { font-size: 11px; color: var(--muted); letter-spacing: 2px; margin-top: 5px; }
+
+  .sessions-box { display: flex; flex-direction: column; gap: 10px; }
+  .session-badge { 
+    padding: 10px 12px; 
+    border: 1px solid var(--border); 
+    border-radius: 6px; 
+    font-size: 10px; 
+    font-weight: 700; 
+    color: var(--muted); 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    text-transform: uppercase; 
+    background: var(--bg); 
+    transition: 0.3s;
+  }
+  .session-badge.active { border-color: var(--accent); color: var(--text); box-shadow: 0 0 10px rgba(34, 211, 238, 0.1); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: 0.3s; }
+  .session-badge.active .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  /* Center Column: News Feed */
+  .feed-header { 
+    padding: 15px 20px; 
+    border-bottom: 1px solid var(--border); 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+  }
+  .news-feed { 
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 15px 20px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+  }
+  .news-feed::-webkit-scrollbar { width: 4px; }
+  .news-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .news-row { 
+    display: grid; 
+    grid-template-columns: 45px 65px 50px 15px 1fr 100px; 
+    align-items: center; 
+    gap: 12px; 
+    padding: 14px; 
+    background: var(--bg); 
+    border: 1px solid var(--border); 
+    border-radius: 8px; 
+    font-size: 11px; 
+    transition: all 0.3s ease; 
+    cursor: default;
+  }
+  .news-row:hover { 
+    background: var(--surface); 
+    border-color: var(--muted); 
+    transform: translateX(4px); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .news-row.active-next {
+    border-left: 3px solid var(--accent);
+    background: rgba(34, 211, 238, 0.05);
+  }
+  
+  .n-day-wrapper { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .n-day { font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+  .n-date { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+  
+  .n-time { color: var(--muted); font-weight: 500; }
+  .n-curr { font-weight: bold; color: var(--text); background: var(--surface); border: 1px solid var(--border); padding: 4px 0; border-radius: 4px; text-align: center; }
+  .n-impact { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  
+  /* Impact Colors */
+  .imp-high { background: var(--red); box-shadow: 0 0 8px rgba(248,113,113,0.5); }
+  .imp-med { background: var(--orange); }
+  .imp-low { background: var(--yellow); }
+  .imp-none { background: var(--muted); }
+  
+  .n-event { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+  .n-data { text-align: right; font-family: var(--mono); color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+  .n-data span { display: inline-block; }
+
+  /* Pagination Styles */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 0 0 12px 12px;
+  }
+  .page-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .page-btn:hover:not(:disabled) { background: var(--border); color: var(--text); }
+  .page-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: bold; }
+  .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Right Column: Next Release & Volatility */
+  .countdown-box { text-align: center; justify-content: center; align-items: center; padding: 25px 15px; }
+  .cd-label { margin-top: 5px; font-size: 13px; font-weight: bold; color: var(--text); }
+  .cd-time { font-family: Impact, sans-serif; font-size: 46px; color: var(--red); letter-spacing: 3px; margin: 15px 0; text-shadow: 0 0 15px rgba(248,113,113,0.3); }
+
+  /* Volatility Box */
+  .pnl-box { overflow: hidden; text-align: center; justify-content: center; align-items: center; display: flex; flex-direction: column; }
+  .pnl-val { font-family: Impact; font-size: 36px; color: var(--red); position: relative; z-index: 2; letter-spacing: 2px; }
+  
+  /* Floating Arrows */
+  .pnl-arrow { position: absolute; font-size: 16px; opacity: 0; pointer-events: none; z-index: 1; }
+  @keyframes floatUpFade { 0% { transform: translateY(20px); opacity: 0; } 50% { opacity: 0.6; } 100% { transform: translateY(-20px); opacity: 0; } }
+  @keyframes floatDownFade { 0% { transform: translateY(-20px); opacity: 0; } 50% { opacity: 0.6; } 100% { transform: translateY(20px); opacity: 0; } }
   .up-arr { animation: floatUpFade 3s infinite linear; }
   .down-arr { animation: floatDownFade 3s infinite linear; }
 
-  .clock-container { text-align: center; }
-  .day-text { font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 10px; margin-bottom: 10px; }
-  .time-text { font-family: Impact, sans-serif; font-size: 130px; line-height: 0.8; letter-spacing: 12px; color: var(--text); filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.1)); }
-  .ampm { font-size: 30px; vertical-align: middle; margin-left: -10px; opacity: 0.5; }
-  .date-text { font-size: 12px; color: var(--muted); margin-top: 15px; letter-spacing: 4px; }
+  /* Extras */
+  .theme-toggle { position: absolute; top: 18px; right: 20px; background: none; border: none; cursor: pointer; font-size: 16px; z-index: 100; }
+  @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+  .blink-dot { animation: blink 2s infinite; width: 8px; height: 8px; background: var(--red); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--red); }
 
-  .sessions-footer { position: absolute; bottom: 30px; left: 0; width: 100%; display: flex; justify-content: center; gap: 15px; }
-  .session-badge { padding: 6px 14px; border-radius: 4px; border: 1px solid var(--border); font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; background: var(--bg); }
-  .session-badge.active { border-color: var(--accent); color: var(--text); }
-  .dot { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; }
-  .active .dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-
-  .theme-toggle { position: absolute; top: 45px; right: 20px; background: none; border: none; cursor: pointer; font-size: 18px; }
+  /* Responsiveness */
+  @media (max-width: 1050px) {
+    .terminal-main { grid-template-columns: 1fr; height: auto; overflow-y: visible; }
+    body { overflow: auto; height: auto; min-height: 100vh; }
+    .news-feed { overflow-y: visible; }
+  }
 </style>
 </head>
 <body>
 
+  <!-- TOP TICKER -->
   <div class="ticker-wrap">
     <div class="ticker-move" id="ticker-content">
-      <span class="ticker-item">Awaiting Journal Sync...</span>
+      <span class="ticker-item">Awaiting Data Sync...</span>
     </div>
   </div>
 
+  <!-- BACKGROUND CHART -->
   <canvas id="chart-canvas"></canvas>
   <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
 
+  <!-- MAIN DASHBOARD -->
   <div class="terminal-main">
-    <div class="pnl-box" id="daily-pnl-box">
-        <div class="pnl-locked">Login to journal<br>to view today's P&L</div>
+    
+    <!-- LEFT COLUMN -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+      <div class="box clock-box">
+        <div class="day-text" id="day-name">Thursday</div>
+        <div class="time-text"><span id="main-clock">00:00:00</span><span class="ampm" id="ampm">AM</span></div>
+        <div class="date-text" id="full-date">APR 30, 2026</div>
+      </div>
+      
+      <div class="box sessions-box" style="flex-grow: 1;">
+        <div class="box-title">Active Sessions</div>
+        <div class="session-badge" id="s-sydney">Sydney <div class="dot"></div></div>
+        <div class="session-badge" id="s-tokyo">Tokyo <div class="dot"></div></div>
+        <div class="session-badge" id="s-london">London <div class="dot"></div></div>
+        <div class="session-badge" id="s-ny">New York <div class="dot"></div></div>
+      </div>
     </div>
 
-    <div class="clock-container">
-      <div class="day-text" id="day-name">Thursday</div>
-      <div class="time-text"><span id="main-clock">00:00:00</span><span class="ampm" id="ampm">AM</span></div>
-      <div class="date-text" id="full-date">APR 30, 2026</div>
+    <!-- CENTER COLUMN -->
+    <div class="box" style="padding:0;">
+      <div class="feed-header">
+          <div class="box-title" style="margin:0; font-size: 12px; font-weight: bold; color: var(--text); display:flex; align-items:center; gap:8px;">
+            FACTORY COMMAND FEED <span class="blink-dot"></span>
+          </div>
+          <div style="display:flex; gap:12px; font-size:10px; color:var(--muted); text-transform: uppercase;">
+              <div style="display:flex; align-items:center; gap:6px;"><span class="n-impact imp-high"></span> High</div>
+              <div style="display:flex; align-items:center; gap:6px;"><span class="n-impact imp-med"></span> Med</div>
+              <div style="display:flex; align-items:center; gap:6px;"><span class="n-impact imp-low"></span> Low</div>
+          </div>
+      </div>
+      
+      <!-- News List Container -->
+      <div class="news-feed" id="news-list">
+          <!-- Populated by JavaScript -->
+      </div>
+      
+      <!-- Pagination Controls -->
+      <div class="pagination" id="pagination-controls">
+          <!-- Populated by JavaScript -->
+      </div>
     </div>
 
-    <div class="pnl-box">
-        <div class="pnl-label">System Status</div>
-        <div class="pnl-val" style="font-size: 18px; color: var(--accent);">READY</div>
+    <!-- RIGHT COLUMN -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+      
+      <div class="box countdown-box">
+          <div class="box-title" style="color: var(--accent);">Next High Impact</div>
+          <div class="cd-label" id="next-event-lbl">Loading...</div>
+          <div class="cd-time" id="cd-time">00:00:00</div>
+          <div style="font-size:10px; color:var(--muted); text-transform: uppercase; letter-spacing: 2px;">Time to release</div>
+      </div>
+      
+      <div class="box pnl-box" style="flex-grow:1;">
+          <!-- Animated Background Arrows -->
+          <span class="pnl-arrow up-arr" style="left:15%; top: 20%; color:var(--red); animation-delay:0s;">▲</span>
+          <span class="pnl-arrow up-arr" style="right:20%; top: 40%; color:var(--red); animation-delay:1.5s;">▲</span>
+          <span class="pnl-arrow up-arr" style="left:25%; top: 70%; color:var(--red); animation-delay:0.7s;">▲</span>
+          <span class="pnl-arrow up-arr" style="right:15%; top: 80%; color:var(--red); animation-delay:2.2s;">▲</span>
+          
+          <div class="box-title">Expected Volatility</div>
+          <div class="pnl-val">EXTREME</div>
+          <div style="font-size: 9px; color:var(--muted); margin-top:8px; text-transform: uppercase; z-index: 2;">System Active</div>
+      </div>
+      
     </div>
-  </div>
-
-  <div class="sessions-footer">
-    <div class="session-badge" id="s-sydney"><div class="dot"></div> Sydney</div>
-    <div class="session-badge" id="s-tokyo"><div class="dot"></div> Tokyo</div>
-    <div class="session-badge" id="s-london"><div class="dot"></div> London</div>
-    <div class="session-badge" id="s-ny"><div class="dot"></div> New York</div>
   </div>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBaUuA3BTSTZG5jV4GzIEb0WaVXflbLprw",
-    authDomain: "ace-gio-s-day-trading-notion.firebaseapp.com",
-    projectId: "ace-gio-s-day-trading-notion",
-    storageBucket: "ace-gio-s-day-trading-notion.firebasestorage.app",
-    messagingSenderId: "676599193285",
-    appId: "1:676599193285:web:a5f239951e83fb3a87daac"
-  };
+  // ==========================================
+  // ADD YOUR FINANCIAL MODELING PREP API KEY HERE
+  // ==========================================
+  const FMP_API_KEY = "YOUR_API_KEY_HERE"; 
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
+  let newsData = [];
+  let currentPage = 1;
+  const itemsPerPage = 6;
+  let targetTime = null;
 
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      db.ref('users/' + user.uid + '/history').on('value', s => {
-        const history = s.val() || [];
-        updateTickerAndPnl(history);
-      });
-    }
-  });
-
-  function updateTickerAndPnl(history) {
-    if (history.length === 0) return;
-
-    const lastTrade = history[0];
-    const wins = history.filter(t => t.pnl > 0).length;
-    const wr = Math.round((wins / history.length) * 100);
-    const tickerStr = `LAST TRADE: ${lastTrade.ticker} ${lastTrade.pnl >= 0 ? '+' : ''}$${lastTrade.pnl} • OVERALL WIN RATE: ${wr}% • TOTAL TRADES: ${history.length} • TERMINAL ACTIVE •`;
-    document.getElementById('ticker-content').innerHTML = `<span class="ticker-item">${tickerStr}</span><span class="ticker-item">${tickerStr}</span>`;
-
-    const todayStr = new Date().toLocaleDateString();
-    const todayPnl = history
-        .filter(t => t.date === todayStr && (t.type || 'live') === 'live')
-        .reduce((sum, t) => sum + t.pnl, 0);
-
-    const pnlBox = document.getElementById('daily-pnl-box');
-    const isUp = todayPnl >= 0;
+  async function fetchFMPNews() {
+    const container = document.getElementById('news-list');
     
-    // Generate Arrows HTML
-    let arrowHtml = '';
-    for(let i=0; i<4; i++) {
-        const side = i % 2 === 0 ? 'left' : 'right';
-        const pos = i < 2 ? '10%' : '75%';
-        const delay = (i * 0.7) + 's';
-        arrowHtml += `<span class="pnl-arrow ${isUp ? 'up-arr' : 'down-arr'}" style="${side}:${pos}; color:${isUp ? 'var(--green)' : 'var(--red)'}; animation-delay:${delay}">${isUp ? '▲' : '▼'}</span>`;
+    // Check if key is entered
+    if (FMP_API_KEY === "YOUR_API_KEY_HERE" || FMP_API_KEY.trim() === "") {
+        container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--orange); font-size: 11px; line-height: 1.5;">API Key Missing.<br>Please open the code and paste your Financial Modeling Prep API Key at the top of the script.</div>';
+        return;
     }
 
-    pnlBox.innerHTML = `
-        ${arrowHtml}
-        <div class="pnl-label">Today's P&L</div>
-        <div class="pnl-val" style="color:${isUp ? 'var(--green)' : 'var(--red)'}">
-            ${isUp ? '$' : '-$'}${Math.abs(todayPnl).toLocaleString()}
-        </div>
-    `;
+    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted); font-size: 11px;">Establishing secure connection to FMP Data Feed...</div>';
+
+    try {
+      // Calculate date range: Today -> 7 Days from now
+      const today = new Date().toISOString().split('T')[0];
+      const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      // Fetching directly from the official FMP v3 API without proxy
+      const response = await fetch(`https://financialmodelingprep.com/api/v3/economic_calendar?from=${today}&to=${nextWeek}&apikey=${FMP_API_KEY}`);
+      const data = await response.json();
+
+      if (data["Error Message"]) {
+          throw new Error(data["Error Message"]);
+      }
+
+      const now = new Date();
+      let nextEventFound = false;
+
+      // Sort data chronologically
+      data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      newsData = data.map(item => {
+        const eventDate = new Date(item.date);
+        
+        let impactLvl = 'none';
+        if(item.impact === 'High') impactLvl = 'high';
+        if(item.impact === 'Medium') impactLvl = 'med';
+        if(item.impact === 'Low') impactLvl = 'low';
+
+        // Find the absolute next HIGH impact event for the ticker & countdown
+        let isNext = false;
+        if (!nextEventFound && eventDate > now && impactLvl === 'high') {
+            isNext = true;
+            nextEventFound = true;
+            targetTime = eventDate.getTime();
+        }
+
+        return {
+          day: new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(eventDate),
+          date: new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(eventDate).toUpperCase(),
+          time: new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit' }).format(eventDate),
+          currency: item.currency || item.country || "---",
+          impact: impactLvl,
+          event: item.event,
+          forecast: item.estimate !== null ? item.estimate : '',
+          prev: item.previous !== null ? item.previous : '',
+          isNext: isNext,
+          rawDate: eventDate
+        };
+      });
+
+      // Fallback: If no high impact events left this week, track the very next event
+      if (!nextEventFound && newsData.length > 0) {
+         const nextEvt = newsData.find(e => e.rawDate > now);
+         if(nextEvt) {
+             nextEvt.isNext = true;
+             targetTime = nextEvt.rawDate.getTime();
+         }
+      }
+
+      renderNews();
+    } catch (error) {
+      console.error(error);
+      container.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--red); font-size: 11px;">API Connection Failed.<br>Error: ${error.message || "Invalid API Key or Limit Reached"}</div>`;
+    }
   }
 
+  // 2. RENDER THE FACTORY FEED
+  function renderNews() {
+    const container = document.getElementById('news-list');
+    container.innerHTML = '';
+    
+    let nextEventSet = false;
+
+    // Set the ticker
+    newsData.forEach(item => {
+       if (item.isNext && !nextEventSet) {
+           document.getElementById('next-event-lbl').textContent = `${item.currency} ${item.event}`;
+           setTicker(item);
+           nextEventSet = true;
+       }
+    });
+
+    // Paginate items
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedItems = newsData.slice(startIndex, endIndex);
+
+    if (paginatedItems.length === 0) {
+       container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--muted); font-size: 11px;">No upcoming events found for this period.</div>';
+       return;
+    }
+
+    paginatedItems.forEach(item => {
+       const row = document.createElement('div');
+       row.className = 'news-row';
+       
+       if (item.isNext) {
+           row.classList.add('active-next');
+       }
+       
+       const impClass = item.impact === 'high' ? 'imp-high' : item.impact === 'med' ? 'imp-med' : item.impact === 'low' ? 'imp-low' : 'imp-none';
+       const f = item.forecast ? `<span style="color:var(--text)">F: ${item.forecast}</span>` : '';
+       const p = item.prev ? `<span>P: ${item.prev}</span>` : '';
+       
+       row.innerHTML = `
+          <div class="n-day-wrapper">
+             <div class="n-day">${item.day}</div>
+             <div class="n-date">${item.date}</div>
+          </div>
+          <div class="n-time">${item.time}</div>
+          <div class="n-curr">${item.currency}</div>
+          <div class="n-impact ${impClass}"></div>
+          <div class="n-event" style="${item.isNext ? 'font-weight:bold; color:var(--accent);' : ''}">${item.event}</div>
+          <div class="n-data">${f}${p}</div>
+       `;
+       container.appendChild(row);
+    });
+
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const container = document.getElementById('pagination-controls');
+    container.innerHTML = '';
+    
+    const totalPages = Math.ceil(newsData.length / itemsPerPage);
+    if (totalPages <= 1) return; 
+    
+    // Prev Button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'page-btn';
+    prevBtn.textContent = 'Prev';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => { if(currentPage > 1) { currentPage--; renderNews(); } };
+    container.appendChild(prevBtn);
+    
+    // Numbered Pages
+    for(let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `page-btn ${currentPage === i ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.onclick = () => { currentPage = i; renderNews(); };
+        container.appendChild(pageBtn);
+    }
+    
+    // Next Button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'page-btn';
+    nextBtn.textContent = 'Next';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => { if(currentPage < totalPages) { currentPage++; renderNews(); } };
+    container.appendChild(nextBtn);
+  }
+
+  function setTicker(nextItem) {
+    const tickerStr = `🚨 NEXT HIGH IMPACT NEWS: ${nextItem.currency} ${nextItem.event.toUpperCase()} @ ${nextItem.time} • EXPECT EXTREME VOLATILITY • FORECAST: ${nextItem.forecast || '-'} • PREVIOUS: ${nextItem.prev || '-'} • TERMINAL ACTIVE • `;
+    document.getElementById('ticker-content').innerHTML = `<span class="ticker-item">${tickerStr}</span><span class="ticker-item">${tickerStr}</span>`;
+  }
+
+  // 3. CLOCK & SESSIONS LOGIC
   function updateClock() {
     const now = new Date();
     let h = now.getHours();
@@ -174,13 +519,34 @@
     document.getElementById('s-ny').classList.toggle('active', utcHour >= 13 && utcHour < 21);
   }
 
+  // 4. REAL-TIME COUNTDOWN LOGIC
+  setInterval(() => {
+      if(!targetTime) {
+          document.getElementById('cd-time').textContent = "00:00:00";
+          return;
+      }
+      
+      const now = new Date().getTime();
+      let diff = targetTime - now;
+      
+      if(diff < 0) diff = 0;
+      
+      let h = Math.floor(diff / (1000 * 60 * 60));
+      let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      let s = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      document.getElementById('cd-time').textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }, 1000);
+
+  // 5. BACKGROUND CHART ANIMATION
   const canvas = document.getElementById('chart-canvas');
   const ctx = canvas.getContext('2d');
   let candles = [];
   let lastClose = window.innerHeight / 2;
 
   function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  window.onresize = resize; resize();
+  window.onresize = resize; 
+  resize();
 
   function generateCandle() {
     let open = lastClose;
@@ -188,14 +554,22 @@
     let close = open + change;
     if (close < 150) close += 100; if (close > canvas.height - 150) close -= 100;
     lastClose = close;
-    return { x: canvas.width, open, close, high: Math.min(open, close) - 10, low: Math.max(open, close) + 10, color: close < open ? '#4ade80' : '#f87171' };
+    return { 
+        x: canvas.width, open, close, 
+        high: Math.min(open, close) - 10, low: Math.max(open, close) + 10, 
+        color: close < open ? '#4ade80' : '#f87171' 
+    };
   }
 
-  for(let i=0; i<60; i++) { let c = generateCandle(); c.x = canvas.width - (i * 16); candles.push(c); }
+  for(let i=0; i<60; i++) { 
+      let c = generateCandle(); 
+      c.x = canvas.width - (i * 16); 
+      candles.push(c); 
+  }
 
   function animateChart() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    candles.forEach((c, i) => {
+    candles.forEach((c) => {
       c.x -= 0.4;
       ctx.strokeStyle = c.color; ctx.fillStyle = c.color; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(c.x + 6, c.high); ctx.lineTo(c.x + 6, c.low); ctx.stroke();
@@ -205,8 +579,8 @@
     if (candles[candles.length-1].x < -20) candles.pop();
     requestAnimationFrame(animateChart);
   }
-  animateChart();
 
+  // 6. INITIALIZATION
   function toggleTheme() {
     const b = document.body;
     const isDark = b.getAttribute('data-theme') !== 'light';
@@ -215,6 +589,9 @@
 
   setInterval(updateClock, 1000);
   updateClock();
+  fetchFMPNews(); // Initialize live data request
+  animateChart();
+
 </script>
 </body>
 </html>
